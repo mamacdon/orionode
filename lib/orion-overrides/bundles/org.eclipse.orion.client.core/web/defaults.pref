@@ -1,0 +1,9 @@
+{
+	"/plugins":{
+		"plugins/fileClientPlugin.html":true,
+		"plugins/webEditingPlugin.html":true,
+		"plugins/pageLinksPlugin.html":true,
+		"plugins/jslintPlugin.html":true,
+		"plugins/nodeSumo.html":true
+	}
+}
