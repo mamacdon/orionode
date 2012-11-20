@@ -1,0 +1,62 @@
+<div>
+	<div class="sectionTable" role="region">
+		<div>
+			<div class="sectionTableItem ">
+				
+				<div dojoType="dijit.form.Form" id="siteForm">
+					<table class="siteEditorTable">
+						<tr>
+							<td>
+								<label dojoAttachPoint="siteConfigNameLabel" for="${id}_name">${siteConfigNameLabelText}</label>
+							</td>
+							<td>
+								<input dojoType="dijit.form.ValidationTextBox" dojoAttachPoint="name" id="${id}_name"
+									required="true" value="">
+							</td>
+						</tr>
+						
+						<tr>
+							<td>
+								<label dojoAttachPoint="hostHintLabel" for="${id}_hostHint">${hostHintLabelText}</label>
+							</td>
+							<td>
+								<input dojoType="dijit.form.ValidationTextBox" dojoAttachPoint="hostHint" id="${id}_hostHint"
+									required="false" value="">
+								<em>${hostHintEm}</em>
+							</td>
+						</tr>
+						
+						<tr>
+							<td>
+								<label dojoAttachPoint="hostingStatusLabel">${hostingStatusLabelText}</label>
+							</td>
+							<td>
+								<span dojoAttachPoint="hostingStatus"></span>
+								<span dojoAttachPoint="siteStartedWarning">
+									<em>${siteStartedWarningEm}</em>
+								</span>
+							</td>
+						</tr>
+					</table>
+				</div>
+				
+				
+			</div>
+		</div>
+	</div>
+
+	<table class="siteEditorTable" style="width:100%;">
+			<tr>
+				<td>
+					<div dojoAttachPoint="mappingsPlaceholder" class="mappingsGridTable" id="${id}_mappingsPlaceholder"></div>
+				</td>
+			</tr>
+			
+			<tr>
+				<td>
+					<div dojoAttachPoint="convertToolbar" id="${id}_convertToolbar"></div>
+				</td>
+			</tr>		
+	</table>
+
+</div>
