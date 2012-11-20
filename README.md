@@ -1,6 +1,15 @@
 # Orionode
 A minimal, single-user deployment of [Eclipse Orion](http://www.elipse.org/orion/). Use for hacking files on your computer using Orion's editing environment.
 
+## Features
+* Basic Navigator operations (Create file/folder, delete file/folder)
+* Basic Editor operations (Edit file, save file, ETags)
+* Plugin operations
+* Shell command for launching a node app (type ```help node``` in the Shell page to find out more)
+* Client caching for static content (cache time: 2 hours)
+* Gzip
+* Concatenation and minification of pages (requires a manual step, see **Concatenation + Minification**, below)
+
 ## Requirements
 * node.js
 * A web browser
@@ -19,15 +28,6 @@ with the password (the auth 'User' field is ignored -- Orionode only verifies th
 file, **no authentication** is used (so anyone request can read and write your files!).
 * ```-w``` or ```-workspace```: the target directory for reading and writing files. Will be created if it doesn't exist. Defaults to a subdirectory 
 named **.workspace** in the repository folder.
-
-## Features
-* Basic Navigator operations (Create file/folder, delete file/folder)
-* Basic Editor operations (Edit file, save file, ETags)
-* Plugin operations
-* Shell command for launching a node app (type ```help node``` in the Shell page to find out more)
-* Client caching for static content (cache time: 2 hours)
-* Gzip
-* Concatenation and minification of pages (requires a manual step, see **Concatenation + Minification**, below)
 
 ## Missing/buggy features
 * Missing file operations: copy/move/rename, import/export, binary data.
