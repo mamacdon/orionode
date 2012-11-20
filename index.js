@@ -63,7 +63,7 @@ function startServer(port, workspaceDir, tempDir, passwordFile, password) {
 var args = argslib.parseArgs(process.argv);
 var port = args.port || args.p || 8081;
 var workspaceArg = args.workspace || args.w;
-var workspaceDir = workspaceArg ? path.join(process.cwd(), workspaceArg) : path.join(__dirname, '.workspace');
+var workspaceDir = workspaceArg ? path.resolve(process.cwd(), workspaceArg) : path.join(__dirname, '.workspace');
 var tempDir = path.join(workspaceDir, '.temp');
 argslib.createDirs([workspaceDir, tempDir], function(dirs, tempDir) {
 	var passwordFile = args.password || args.pwd;
