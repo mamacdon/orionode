@@ -49,9 +49,9 @@ No security is guaranteed or even implied. Always run Orionode with the ```-pwd`
 
 ## Concatenation + Minification
 By default the pages served up by Orionode are not concatenated or minified, so they will load rather slowly.
-You can mitigate this by running the client-side build. To do this, just run the ```node build.js``` from the ```orion-build``` subdirectory:
+You can mitigate this by running the client-side build. To do this, just run ```build.js```, found in the ```build``` directory:
 ```
-orionode $ node ./orion-build/build.js
+orionode $ node ./build/build.js
 -------------------------------------------------------
  [lots of output]
 Done.
