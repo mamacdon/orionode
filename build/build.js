@@ -24,6 +24,7 @@ var Deferred = PromisedIO.Deferred;
 var BUNDLE_WEB_FOLDER = './web/';
 var IS_WINDOWS = process.platform === 'win32';
 
+var pathToNode = process.execPath;
 var pathToRjs = path.resolve(__dirname, 'r.js');
 var pathToBuildFile = path.resolve(__dirname, process.argv[2] || './orion.build.js');
 var pathToOrionClientBundlesFolder = path.resolve(path.dirname(pathToBuildFile), '../lib/orion.client/bundles/');
@@ -61,6 +62,21 @@ function execCommand(cmd, options) {
 		}
 		if (stdout) { console.log(stdout); }
 		d.resolve();
+	});
+	return d;
+}
+
+function spawn(cmd, args, options) {
+	options = options || {};
+	var d = new Deferred();
+	console.log(cmd + ' ' + args.join(' ') + '');
+	var child = child_process.spawn(cmd, args, {
+		cwd: options.cwd || pathToTempDir,
+		stdio: ['ignore', process.stdout, process.stderr]
+	});
+	child.on('exit', function(code) {
+		if (code === 0) { d.resolve(); }
+		else { d.reject(); }
 	});
 	return d;
 }
@@ -136,15 +152,16 @@ function build(optimizeElements) {
 			return function() {
 				// TODO better to call r.js from this node instance instead of shell cmd??
 				var pageDir = op.pageDir, name = op.name;
-				var cmd = format(
-					"node ${pathToRjs} -o ${pathToBuildFile} name=${name} out=${out} baseUrl=${baseUrl}", {
-					pathToRjs: pathToRjs, pathToBuildFile: pathToBuildFile,
-					name: pageDir + '/' + name,
-					out: './.temp/' + pageDir + '/built-' + name + '.js',
-					baseUrl: './.temp/'
-				});
+				var args = [
+					pathToRjs,
+					"-o",
+					pathToBuildFile,
+					"name=" + pageDir + '/' + name,
+					"out=" + './.temp/' + pageDir + '/built-' + name + '.js',
+					"baseUrl=" + './.temp/'
+				];
 				// TODO check existence of path.join(pageDir, name) -- skip if the file doesn't exist
-				return execCommand(cmd, {
+				return spawn(pathToNode, args, {
 					cwd: path.dirname(pathToBuildFile)
 				});
 			};
