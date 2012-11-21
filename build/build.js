@@ -17,11 +17,9 @@ var fs = require('fs');
 var pfs = require('promised-io/fs');
 var path = require('path');
 var PromisedIO = require('promised-io');
-var xmldom = require('xmldom');
+var sax = require('sax'), strictSax = true;
 
 var Deferred = PromisedIO.Deferred;
-var DOMParser = xmldom.DOMParser;
-var XMLSerializer = xmldom.XMLSerializer;
 
 var BUNDLE_WEB_FOLDER = './web/';
 var IS_WINDOWS = process.platform === 'win32';
@@ -30,14 +28,6 @@ var pathToRjs = path.resolve(__dirname, 'r.js');
 var pathToBuildFile = path.resolve(__dirname, process.argv[2] || './orion.build.js');
 var pathToBundlesFolder = path.resolve(path.dirname(pathToBuildFile), '../bundles/');
 var pathToTempDir = path.resolve(__dirname, '.temp/');
-
-/**
- * @param {NodeList} nodeList
- * @returns {Array}
- */
-function toArray(nodelist) {
-	return Array.prototype.slice.call(nodelist);
-}
 
 /**
  * Pass varargs to get numbered parameters, or a single object for named parameters.
@@ -76,6 +66,18 @@ function execCommand(cmd, options) {
 }
 
 /**
+ * Filter function for Array.prototype.filter that produces an array with unique strictly-equal elements.
+ */
+function unique(bundle, i, array) {
+	return array.every(function(bundle2, j) {
+		if (bundle === bundle2) {
+			return i >= j;
+		}
+		return true;
+	});
+}
+
+/**
  * Workaround for pfs.readFile() always returning Buffer
  * @see https://github.com/kriszyp/promised-io/issues/24
  */
@@ -83,31 +85,14 @@ function debuf(maybeBuf) {
 	return Buffer.isBuffer(maybeBuf) ? maybeBuf.toString('utf8') : maybeBuf;
 }
 
-/**
- * @param {String} xmlFile
- */
-function processFile(xmlFile) {
-	var document = new DOMParser().parseFromString(xmlFile, 'application/xml');
-	var targets = toArray(document.getElementsByTagName('target'));
-	var requirejsTarget;
-	targets.some(function(t) {
-		if (t.getAttribute('name') === 'requirejs') {
-			requirejsTarget = t;
-			return true;
-		}
-	});
-
-	if (!requirejsTarget) {
-		console.log("Whoa! Couldn't find a <target name=\"requirejs\"> element in customTargets.xml");
-		return new Deferred().reject();
-	}
-	var optimizes = toArray(requirejsTarget.getElementsByTagName('optimize')).map(function(optimize) {
-		var pageDir = optimize.getAttribute('pageDir');
-		var name = optimize.getAttribute('name');
+function build(optimizeElements) {
+	var optimizes = optimizeElements.map(function(optimize) {
+		var pageDir = optimize.attributes.pageDir;
+		var name = optimize.attributes.name;
 		return {
 			pageDir: pageDir,
 			name: name,
-			bundle: optimize.getAttribute('bundle'),
+			bundle: optimize.attributes.bundle,
 			pageDirPath: path.join(pathToTempDir, pageDir),
 			minifiedFilePath: path.join(pathToTempDir, pageDir, 'built-' + name) + '.js',
 			htmlFilePath: path.join(pathToTempDir, pageDir, name + '.html')
@@ -115,14 +100,7 @@ function processFile(xmlFile) {
 	});
 	var bundles = optimizes.map(function(op) {
 		return op.bundle;
-	}).filter(function(bundle, i, array) {
-		return array.every(function(bundle2, j) {
-			if (bundle === bundle2) {
-				return i >= j;
-			}
-			return true;
-		});
-	});
+	}).filter(unique);
 
 	var skipCopy = false, skipOptimize = false, skipUpdateHtml = false;
 	/*
@@ -226,9 +204,36 @@ function exitFail(error) {
 
 function exitSuccess() { process.exit(0); }
 
+/**
+ * @param {String} xmlFile
+ * @returns {Promise}
+ */
+function processFile(filepath) {
+	var saxStream = sax.createStream(strictSax);
+	var optimizeElements = [];
+	var buildPromise = new Deferred();
+	saxStream.on('opentag', function(node) {
+		if (node.name === 'optimize') {
+			optimizeElements.push(node);
+		}
+	});
+	saxStream.on('end', function() {
+		build(optimizeElements).then(
+			function() { buildPromise.resolve(); },
+			function() { buildPromise.reject(); });
+	});
+	saxStream.on('error', exitFail);
+	fs.createReadStream(filepath).pipe(saxStream);
+	return buildPromise;
+}
+
 /*
  * The fun starts here
  */
-pfs.readFile(path.join(__dirname, 'customTargets.xml'), 'utf8').then(function(xml) {
-	return processFile(debuf(xml));
-}, exitFail).then(exitSuccess, exitFail);
+processFile(path.join(__dirname, 'customTargets.xml')).then(
+	exitSuccess,
+	exitFail);
+
+//pfs.readFile(path.join(__dirname, 'customTargets.xml'), 'utf8').then(function(xml) {
+//	return processFile(debuf(xml));
+//}, exitFail).then(exitSuccess, exitFail);
