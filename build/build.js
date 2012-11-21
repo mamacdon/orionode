@@ -26,7 +26,7 @@ var IS_WINDOWS = process.platform === 'win32';
 
 var pathToRjs = path.resolve(__dirname, 'r.js');
 var pathToBuildFile = path.resolve(__dirname, process.argv[2] || './orion.build.js');
-var pathToBundlesFolder = path.resolve(path.dirname(pathToBuildFile), '../bundles/');
+var pathToOrionClientBundlesFolder = path.resolve(path.dirname(pathToBuildFile), '../lib/orion.client/bundles/');
 var pathToTempDir = path.resolve(__dirname, '.temp/');
 
 /**
@@ -122,7 +122,7 @@ function build(optimizeElements) {
 		console.log('-------------------------------------------------------\n' + 'Copying bundle web content to ' + pathToTempDir + '...\n');
 		return PromisedIO.seq(bundles.map(function(bundle) {
 			return function() {
-				var bundleWebFolder = path.resolve(pathToBundlesFolder, bundle, BUNDLE_WEB_FOLDER);
+				var bundleWebFolder = path.resolve(pathToOrionClientBundlesFolder, bundle, BUNDLE_WEB_FOLDER);
 				// The "cmd /c" prefix ensures Windows command processor is invoked (rather than, say, Cygwin bash)
 				var cmd = IS_WINDOWS ? format('xcopy /e /h /q /y "${0}" "${1}" ', bundleWebFolder, pathToTempDir)
 					: format("cp -R ${0}/* ${1}", bundleWebFolder, pathToTempDir);
@@ -173,13 +173,13 @@ function build(optimizeElements) {
 		}));
 	}).then(function() {
 		// Copy the built files from our .temp directory back to their original locations in the bundles folder
-		console.log('-------------------------------------------------------\n' + 'Copy built files to ' + pathToBundlesFolder + '...\n');
+		console.log('-------------------------------------------------------\n' + 'Copy built files to ' + pathToOrionClientBundlesFolder + '...\n');
 		return PromisedIO.seq(optimizes.map(function(op) {
 			return function() {
 				var args = {
 					builtJsFile: op.minifiedFilePath,
 					htmlFile: op.htmlFilePath,
-					originalFolder: path.join(pathToBundlesFolder, op.bundle, BUNDLE_WEB_FOLDER, op.pageDir)
+					originalFolder: path.join(pathToOrionClientBundlesFolder, op.bundle, BUNDLE_WEB_FOLDER, op.pageDir)
 				};
 				if (IS_WINDOWS) {
 					return PromisedIO.all([
@@ -191,9 +191,6 @@ function build(optimizeElements) {
 				}
 			};
 		}));
-	}).then(function() {
-		console.log('Done.');
-		process.exit(0);
 	});
 }
 
@@ -218,9 +215,7 @@ function processFile(filepath) {
 		}
 	});
 	saxStream.on('end', function() {
-		build(optimizeElements).then(
-			function() { buildPromise.resolve(); },
-			function() { buildPromise.reject(); });
+		build(optimizeElements).then(buildPromise.resolve, buildPromise.reject);
 	});
 	saxStream.on('error', exitFail);
 	fs.createReadStream(filepath).pipe(saxStream);
