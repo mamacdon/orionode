@@ -25,34 +25,46 @@ function handleError(err) {
 	throw err;
 }
 
-function basicAuthIfConfigured(password) {
-	if (typeof password === 'string') {
+function noop(req, res, next) { next(); }
+
+function auth(options) {
+	if (typeof options.password === 'string') {
 		return connect.basicAuth(function(user, pwd) {
-			return pwd === password;
+			return pwd === options.password;
 		});
 	}
-	return function(req, res, next) { next(); }; // no-op
+	return noop;
 }
 
-function startServer(port, workspaceDir, tempDir, passwordFile, password) {
+function logger(options) {
+	return options.log ? connect.logger('tiny') : noop;
+}
+
+function startServer(options) {
+	var workspaceDir = options.workspaceDir, tempDir = options.tempDir;
 	try {
 		var app = connect()
-//			.use(connect.logger('dev')) // uncomment to log all requests to console
+			.use(logger(options))
 			.use(connect.urlencoded())
-			.use(basicAuthIfConfigured(password))
+			.use(auth(options))
 			.use(connect.json())
 			.use(connect.compress())
 			// static code
 			.use(orionNodeStatic(path.normalize(path.join(LIBS, 'orionode.client/'))))
-			.use(orionStatic(    path.normalize(path.join(LIBS, 'orion.client/')), {dojoRoot: path.resolve(LIBS, 'dojo/')}))
+			.use(orionStatic(    path.normalize(path.join(LIBS, 'orion.client/')), {dojoRoot: path.resolve(LIBS, 'dojo/'), dev: options.dev}))
 			// API handlers
 			.use(orionFile({root: '/file', workspaceDir: workspaceDir, tempDir: tempDir}))
 			.use(orionWorkspace({root: '/workspace', fileRoot: '/file', workspaceDir: workspaceDir, tempDir: tempDir}))
 			.use(orionNode({root: '/node', fileRoot: '/file', workspaceDir: workspaceDir, tempDir: tempDir}))
-			.listen(port);
-		if (passwordFile) { console.log(util.format('Using password from file: %s', passwordFile)); }
+			.listen(options.port);
+		if (options.dev) {
+			console.log('Running in development mode');
+		}
+		if (options.passwordFile) {
+			console.log(util.format('Using password from file: %s', options.passwordFile));
+		}
 		console.log(util.format('Using workspace: %s', workspaceDir));
-		console.log(util.format('Listening on port %d...', port));
+		console.log(util.format('Listening on port %d...', options.port));
 		app.on('error', handleError);
 	} catch (e) {
 		handleError(e);
@@ -68,6 +80,14 @@ var tempDir = path.join(workspaceDir, '.temp');
 argslib.createDirs([workspaceDir, tempDir], function(dirs, tempDir) {
 	var passwordFile = args.password || args.pwd;
 	argslib.readPasswordFile(passwordFile, function(password) {
-		startServer(port, dirs[0], dirs[1], passwordFile, password);
+		startServer({
+			port: port,
+			workspaceDir: dirs[0],
+			tempDir: dirs[1],
+			passwordFile: passwordFile,
+			password: password,
+			dev: args.hasOwnProperty('dev'),
+			log: args.hasOwnProperty('log')
+		});
 	});
 });

@@ -28,6 +28,8 @@ with the password (the auth 'User' field is ignored -- Orionode only verifies th
 file, **no authentication** is used (so anyone request can read and write your files!).
 * ```-w``` or ```-workspace```: the target directory for reading and writing files. Will be created if it doesn't exist. Defaults to a subdirectory 
 named **.workspace** in the repository folder.
+* ```-dev```: starts the server in development mode. In this mode, some client-side code is not cached by the browser, to ease development.
+* ```-log```: logs each request served to standard output.
 
 ## Missing/buggy features
 * Missing file operations: copy/move/rename, import/export, binary data.
