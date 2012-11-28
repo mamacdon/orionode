@@ -203,15 +203,19 @@ lastMapTag=${mapsTagTag}
 		<optimize pageDir="." name="index" bundle="org.eclipse.orion.client.core" />
 		<optimize pageDir="navigate" name="table" bundle="org.eclipse.orion.client.core" />
 		<optimize pageDir="edit" name="edit" bundle="org.eclipse.orion.client.core" />
+<!--
 		<optimize pageDir="compare" name="compare" bundle="org.eclipse.orion.client.core" />
 		<optimize pageDir="search" name="search" bundle="org.eclipse.orion.client.core" />
+-->
 		<optimize pageDir="settings" name="settings" bundle="org.eclipse.orion.client.core" />
 		<optimize pageDir="shell" name="shellPage" bundle="org.eclipse.orion.client.core" />		
+
 		<optimize pageDir="plugins/site" name="sitePlugin" bundle="org.eclipse.orion.client.core" />
 		<optimize pageDir="plugins" name="authenticationPlugin" bundle="org.eclipse.orion.client.core" />
 		<optimize pageDir="plugins" name="fileClientPlugin" bundle="org.eclipse.orion.client.core" />
 		<optimize pageDir="plugins" name="jslintPlugin" bundle="org.eclipse.orion.client.core" />
 		<optimize pageDir="plugins" name="preferencesPlugin" bundle="org.eclipse.orion.client.core" />
+<!--
 		<optimize pageDir="plugins" name="taskPlugin" bundle="org.eclipse.orion.client.core" />		
 		<optimize pageDir="sites" name="site" bundle="org.eclipse.orion.client.core" />
 		<optimize pageDir="sites" name="sites" bundle="org.eclipse.orion.client.core" />
@@ -224,6 +228,7 @@ lastMapTag=${mapsTagTag}
 		<optimize pageDir="git" name="git-commit" bundle="org.eclipse.orion.client.git" />
 		<optimize pageDir="profile" name="user-list" bundle="org.eclipse.orion.client.users" />
 		<optimize pageDir="profile" name="userservicePlugin" bundle="org.eclipse.orion.client.users" />
+-->
 
 		<java classname="org.mozilla.javascript.tools.shell.Main">
 			<classpath>

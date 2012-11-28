@@ -11,6 +11,9 @@
 /*global __dirname Buffer console process require*/
 /*jslint regexp:false laxbreak:true*/
 
+// compat shim for v0.6-0.8 differences
+require('../lib/compat');
+
 var child_process = require('child_process');
 var constants = require('constants');
 var fs = require('fs');
@@ -28,7 +31,9 @@ var pathToNode = process.execPath;
 var pathToRjs = path.resolve(__dirname, 'r.js');
 var pathToBuildFile = path.resolve(__dirname, process.argv[2] || './orion.build.js');
 var pathToOrionClientBundlesFolder = path.resolve(path.dirname(pathToBuildFile), '../lib/orion.client/bundles/');
-var pathToTempDir = path.resolve(__dirname, '.temp/');
+var pathToOrionodeClient = path.resolve(path.dirname(pathToBuildFile), '../lib/orionode.client/');
+var pathToDojo = path.resolve(path.dirname(pathToBuildFile), '../lib/dojo/');
+var pathToTempDir = path.resolve(__dirname, '.temp');
 
 /**
  * Pass varargs to get numbered parameters, or a single object for named parameters.
@@ -72,13 +77,16 @@ function spawn(cmd, args, options) {
 	console.log(cmd + ' ' + args.join(' ') + '');
 	var child = child_process.spawn(cmd, args, {
 		cwd: options.cwd || pathToTempDir,
-		stdio: ['ignore', process.stdout, process.stderr]
+		stdio: [process.stdin, process.stdout, process.stderr]
 	});
 	child.on('exit', function(code) {
-		if (code === 0) { d.resolve(); }
-		else { d.reject(); }
+		d.resolve();
 	});
 	return d;
+}
+
+function getCopyCmd(src, dest) {
+	return IS_WINDOWS ? format('xcopy /e /h /q /y "${0}" "${1}"', src, dest) : format("cp -R ${0}/* ${1}", src, dest);
 }
 
 /**
@@ -114,11 +122,8 @@ function build(optimizeElements) {
 			htmlFilePath: path.join(pathToTempDir, pageDir, name + '.html')
 		};
 	});
-	var bundles = optimizes.map(function(op) {
-		return op.bundle;
-	}).filter(unique);
 
-	var skipCopy = false, skipOptimize = false, skipUpdateHtml = false;
+	var skipCopy = false, skipOptimize = false, skipUpdateHtml = false, skipCopyBack = false;
 	/*
 	 * Build steps begin here
 	 */
@@ -130,24 +135,50 @@ function build(optimizeElements) {
 		}
 		return new Deferred().resolve();
 	}).then(function() {
-		/* So. Because the file structure of the Orion source bundles doesn't match the URL/RequireJS module
-		 * structure, we need to copy all the bundles' "./web/" folders into the temp dir, so that module paths
-		 * can resolve successfully, and later optimization steps will work.
-		 */
+		// Copy all required files into the .temp directory for doing the build
 		if (skipCopy) { return new Deferred().resolve(); }
-		console.log('-------------------------------------------------------\n' + 'Copying bundle web content to ' + pathToTempDir + '...\n');
-		return PromisedIO.seq(bundles.map(function(bundle) {
-			return function() {
-				var bundleWebFolder = path.resolve(pathToOrionClientBundlesFolder, bundle, BUNDLE_WEB_FOLDER);
-				// The "cmd /c" prefix ensures Windows command processor is invoked (rather than, say, Cygwin bash)
-				var cmd = IS_WINDOWS ? format('xcopy /e /h /q /y "${0}" "${1}" ', bundleWebFolder, pathToTempDir)
-					: format("cp -R ${0}/* ${1}", bundleWebFolder, pathToTempDir);
-				return execCommand(cmd);
-			};
-		}));
+		console.log('-------------------------------------------------------\n' + 'Copying client code to ' + pathToTempDir + '...\n');
+
+		// Get the list of bundles from the orion.client lib:
+		var bundles = [];
+		return pfs.readdir(pathToOrionClientBundlesFolder).then(function(contents) {
+			return PromisedIO.all(contents.map(function(item) {
+				return pfs.stat(path.join(pathToOrionClientBundlesFolder, item)).then(function(stats) {
+					if (stats.isDirectory()) {
+						bundles.push(item);
+					}
+				});
+			}));
+		}).then(function() {
+			console.log('Copying orion.client');
+			/* So. Because the file structure of the Orion source bundles doesn't match the URL/RequireJS module
+			 * structure, we need to copy all the bundles' "./web/" folders into the temp dir, so that module paths
+			 * can resolve successfully, and later optimization steps will work.
+			 */
+			return PromisedIO.seq(bundles.map(function(bundle) {
+				return function() {
+					var d = new Deferred();
+					var bundleWebFolder = path.resolve(pathToOrionClientBundlesFolder, bundle, BUNDLE_WEB_FOLDER);
+					pfs.exists(bundleWebFolder).then(function() {
+						console.log('Bundle has no web/ folder, skip: ' + bundle);
+						d.resolve();
+					}, function() {
+						execCommand(getCopyCmd(bundleWebFolder, pathToTempDir)).then(d.resolve);
+					});
+					return d;
+				};
+			}));
+		})/*.then(function() {
+			// Dojo is too huge, just hack the build file to link to 
+			console.log('Copying Dojo');
+			return execCommand(getCopyCmd(pathToDojo, pathToTempDir));
+		})*/.then(function() {
+			console.log('Copying orionode.client');
+			return execCommand(getCopyCmd(pathToOrionodeClient, pathToTempDir));
+		});
 	}).then(function() {
 		if (skipOptimize) { return new Deferred().resolve(); }
-		console.log('-------------------------------------------------------\n' + 'Running optimize...\n');
+		console.log('-------------------------------------------------------\n' + 'Running optimizes (' + optimizes.length + ')...\n');
 		return PromisedIO.seq(optimizes.map(function(op) {
 			return function() {
 				// TODO better to call r.js from this node instance instead of shell cmd??
@@ -157,8 +188,8 @@ function build(optimizeElements) {
 					"-o",
 					pathToBuildFile,
 					"name=" + pageDir + '/' + name,
-					"out=" + './.temp/' + pageDir + '/built-' + name + '.js',
-					"baseUrl=" + './.temp/'
+					"out=" + '.temp/' + pageDir + '/built-' + name + '.js',
+					"baseUrl=" + '.temp'
 				];
 				// TODO check existence of path.join(pageDir, name) -- skip if the file doesn't exist
 				return spawn(pathToNode, args, {
@@ -189,6 +220,7 @@ function build(optimizeElements) {
 			};
 		}));
 	}).then(function() {
+		if (skipCopyBack) { return new Deferred().resolve(); }
 		// Copy the built files from our .temp directory back to their original locations in the bundles folder
 		console.log('-------------------------------------------------------\n' + 'Copy built files to ' + pathToOrionClientBundlesFolder + '...\n');
 		return PromisedIO.seq(optimizes.map(function(op) {

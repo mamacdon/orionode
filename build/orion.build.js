@@ -17,19 +17,20 @@
     baseUrl: '.',
 
     // set the paths to our library packages
+    // mamacdon: I hacked the dojo path to resolve --  dojo is just too gigantic to copy into a staging dir
     packages: [{
         name: 'dojo',
-        location: 'org.dojotoolkit/dojo',
+        location: '../../lib/dojo/org.dojotoolkit/dojo',
         main: 'lib/main-browser',
         lib: '.'
     }, {
         name: 'dijit',
-        location: 'org.dojotoolkit/dijit',
+        location: '../../lib/dojo/org.dojotoolkit/dijit',
         main: 'lib/main',
         lib: '.'
     }, {
         name: 'dojox',
-        location: 'org.dojotoolkit/dojox',
+        location: '../../lib/dojo/org.dojotoolkit/dojox',
         main: 'lib/main',
         lib: '.'
     }],

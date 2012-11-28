@@ -56,7 +56,6 @@ You can mitigate this by running the client-side build. To do this, just run ```
     orionode $ node ./build/build.js
     -------------------------------------------------------
     [lots of output]
-    Done.
     orionode $
 
 Clear your browser cache. The next time you load Orionode, it should be much faster.
