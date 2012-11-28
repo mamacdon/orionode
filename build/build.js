@@ -21,7 +21,6 @@ var pfs = require('promised-io/fs');
 var path = require('path');
 var PromisedIO = require('promised-io');
 var sax = require('sax'), strictSax = true;
-
 var Deferred = PromisedIO.Deferred;
 
 var BUNDLE_WEB_FOLDER = './web/';
@@ -51,18 +50,33 @@ function format(str/*, args..*/) {
 }
 
 /**
+ * Workaround for Promised-IO's ridiculous treatment of fs.exists.
+ * @returns {Deferred} A promise that resolves to a boolean giving whether the given filesystem path exists.
+ */
+function exists(path) {
+	var d = new Deferred();
+	try {
+		fs.exists(path, d.resolve);
+	} catch (e) {
+		d.reject(e);
+	}
+	return d;
+}
+
+/**
  * @param {Object} [options]
  * @returns {Deferred} Doesn't reject (but perhaps it should -- TODO)
  */
-function execCommand(cmd, options) {
+function execCommand(cmd, options, suppressError) {
 	options = options || {};
+	suppressError = typeof suppressError === 'undefined' ? false : suppressError;
 	var d = new Deferred();
 	console.log(cmd);
 	child_process.exec(cmd, {
 		cwd: options.cwd || pathToTempDir,
 		stdio: options.stdio || 'inherit'
 	}, function (error, stdout, stderr) {
-		if (error) {
+		if (error && !suppressError) {
 			console.log(error.stack || error);
 		}
 		if (stdout) { console.log(stdout); }
@@ -85,7 +99,12 @@ function spawn(cmd, args, options) {
 	return d;
 }
 
-function getCopyCmd(src, dest) {
+function getCopyFileCmd(srcFile, destFile) {
+	return IS_WINDOWS ? format('echo f | xcopy /y "${0}" "${1}"', srcFile, destFile) : format("cp ${0} ${1}", srcFile, destFile);
+}
+
+/** @returns {String} command for performing recursive copy of src directory to dest directory. */
+function getCopyDirCmd(src, dest) {
 	return IS_WINDOWS ? format('xcopy /e /h /q /y "${0}" "${1}"', src, dest) : format("cp -R ${0}/* ${1}", src, dest);
 }
 
@@ -99,6 +118,10 @@ function unique(bundle, i, array) {
 		}
 		return true;
 	});
+}
+
+function section(name) {
+	console.log('-------------------------------------------------------\n' + name + '...\n');
 }
 
 /**
@@ -122,12 +145,27 @@ function build(optimizeElements) {
 			htmlFilePath: path.join(pathToTempDir, pageDir, name + '.html')
 		};
 	});
+	var cssFiles = optimizes.map(function(op) {
+		var tempPath = path.join(op.pageDir, op.name + '.css');
+		return {
+			path: tempPath,
+			bundlePath: path.join(op.bundle, BUNDLE_WEB_FOLDER, tempPath)
+		};
+	});
 
-	var skipCopy = false, skipOptimize = false, skipUpdateHtml = false, skipCopyBack = false;
 	/*
 	 * Build steps begin here
 	 */
+	// When debugging, change these to false to skip steps.
+	var steps = {
+		copy: true,
+		optimize: true,
+		css: true,
+		updateHtml: true,
+		copyBack: true
+	};
 	return pfs.mkdir(pathToTempDir).then(function() {
+		// Created the temp dir
 		return new Deferred().resolve();
 	}, function(err) {
 		if (err && err.code !== 'EEXIST') {
@@ -136,8 +174,8 @@ function build(optimizeElements) {
 		return new Deferred().resolve();
 	}).then(function() {
 		// Copy all required files into the .temp directory for doing the build
-		if (skipCopy) { return new Deferred().resolve(); }
-		console.log('-------------------------------------------------------\n' + 'Copying client code to ' + pathToTempDir + '...\n');
+		if (steps.copy === false) { return new Deferred().resolve(); }
+		section('Copying client code to ' + pathToTempDir);
 
 		// Get the list of bundles from the orion.client lib:
 		var bundles = [];
@@ -152,54 +190,75 @@ function build(optimizeElements) {
 		}).then(function() {
 			console.log('Copying orion.client');
 			/* So. Because the file structure of the Orion source bundles doesn't match the URL/RequireJS module
-			 * structure, we need to copy all the bundles' "./web/" folders into the temp dir, so that module paths
-			 * can resolve successfully, and later optimization steps will work.
+			 * structure, we need to copy all the bundles' "./web/" folders into the temp dir, so that modules
+			 * will resolve in later optimization steps.
 			 */
 			return PromisedIO.seq(bundles.map(function(bundle) {
 				return function() {
-					var d = new Deferred();
 					var bundleWebFolder = path.resolve(pathToOrionClientBundlesFolder, bundle, BUNDLE_WEB_FOLDER);
-					pfs.exists(bundleWebFolder).then(function() {
-						console.log('Bundle has no web/ folder, skip: ' + bundle);
-						d.resolve();
-					}, function() {
-						execCommand(getCopyCmd(bundleWebFolder, pathToTempDir)).then(d.resolve);
+					return exists(bundleWebFolder).then(function(exists) {
+						if (exists) {
+							return execCommand(getCopyDirCmd(bundleWebFolder, pathToTempDir));
+						} else {
+							console.log('Bundle has no web/ folder, skip: ' + bundle);
+							return;
+						}
 					});
-					return d;
 				};
 			}));
-		})/*.then(function() {
-			// Dojo is too huge, just hack the build file to link to 
-			console.log('Copying Dojo');
-			return execCommand(getCopyCmd(pathToDojo, pathToTempDir));
-		})*/.then(function() {
+		}).then(function() {
 			console.log('Copying orionode.client');
-			return execCommand(getCopyCmd(pathToOrionodeClient, pathToTempDir));
+			return execCommand(getCopyDirCmd(pathToOrionodeClient, pathToTempDir));
 		});
 	}).then(function() {
-		if (skipOptimize) { return new Deferred().resolve(); }
-		console.log('-------------------------------------------------------\n' + 'Running optimizes (' + optimizes.length + ')...\n');
+		if (steps.optimize === false) { return new Deferred().resolve(); }
+		section('Running optimizes (' + optimizes.length + ')');
 		return PromisedIO.seq(optimizes.map(function(op) {
 			return function() {
-				// TODO better to call r.js from this node instance instead of shell cmd??
+				// TODO check existence of path.join(pageDir, name) -- skip if the file doesn't exist
 				var pageDir = op.pageDir, name = op.name;
-				var args = [
+				return spawn(pathToNode, [
 					pathToRjs,
 					"-o",
 					pathToBuildFile,
 					"name=" + pageDir + '/' + name,
 					"out=" + '.temp/' + pageDir + '/built-' + name + '.js',
-					"baseUrl=" + '.temp'
-				];
-				// TODO check existence of path.join(pageDir, name) -- skip if the file doesn't exist
-				return spawn(pathToNode, args, {
-					cwd: path.dirname(pathToBuildFile)
-				});
+					"baseUrl=.temp"
+				], { cwd: path.dirname(pathToBuildFile) });
 			};
 		}));
 	}).then(function() {
-		if (skipUpdateHtml) { return new Deferred().resolve(); }
-		console.log('-------------------------------------------------------\n' + 'Running updateHTML...\n');
+		if (steps.css === false) { return new Deferred.resolve(); }
+
+		// We need all Dojo's .css files to be in .temp/org.dojotoolkit since they are @import'ed from Orion css files.
+		section('Copying Dojo CSS files');
+		var copyDojoCss = IS_WINDOWS 
+			? format('robocopy "${0}" "${1}" *.css /s /nfl /ndl /nc /njh ', pathToDojo, pathToTempDir)
+			: format('find ${0} -name "*.css" -exec cp {} ${1} ";"', pathToDojo, pathToTempDir);
+		return execCommand(copyDojoCss, null, !!IS_WINDOWS /*robocopy returns non-0 exit codes on success, ignore them*/)
+		.then(function() {
+			// Optimize each page's corresponding ${page}.css file.
+			// TODO This is probably a dumb way to do it, but i don't understand how CSS optimization works in the real Orion build.
+			section('Optimizing page CSS files');
+			return PromisedIO.seq(cssFiles.map(function(cssFile) {
+				 return function() {
+					return exists(path.join(pathToTempDir, cssFile.path)).then(function(exists) {
+						if (exists) {
+							return spawn(pathToNode, [
+									pathToRjs,
+									"-o",
+									pathToBuildFile,
+									"cssIn=.temp/" + cssFile.path,
+									"out=.temp/" + cssFile.path
+								], { cwd: path.dirname(pathToBuildFile) });
+						}
+					});
+				};
+			}));
+		});
+	}).then(function() {
+		if (steps.updateHtml === false) { return new Deferred().resolve(); }
+		section('Running updateHTML');
 		return PromisedIO.seq(optimizes.map(function(op) {
 			return function() {
 				// TODO stat minifiedFilePath, only perform the replace if minifiedfile.size > 0
@@ -220,9 +279,10 @@ function build(optimizeElements) {
 			};
 		}));
 	}).then(function() {
-		if (skipCopyBack) { return new Deferred().resolve(); }
+		if (steps.copyBack === false) { return new Deferred().resolve(); }
 		// Copy the built files from our .temp directory back to their original locations in the bundles folder
-		console.log('-------------------------------------------------------\n' + 'Copy built files to ' + pathToOrionClientBundlesFolder + '...\n');
+		// TODO: should create a separate 'optimized' source folder to avoid polluting the lib/orion.client/ folder.
+		section('Copy built files to ' + pathToOrionClientBundlesFolder);
 		return PromisedIO.seq(optimizes.map(function(op) {
 			return function() {
 				var args = {
@@ -239,7 +299,19 @@ function build(optimizeElements) {
 					return execCommand(format("cp ${builtJsFile} ${htmlFile} ${originalFolder}", args));
 				}
 			};
-		}));
+		})).then(function() {
+			section('Copy optimized CSS files to ' + pathToOrionClientBundlesFolder);
+			return PromisedIO.seq(cssFiles.map(function(cssFile) {
+				return function() {
+					var optimizedCssPath = path.join(pathToTempDir, cssFile.path);
+					return exists(optimizedCssPath).then(function(exists) {
+						if (exists) {
+							return execCommand(getCopyFileCmd(optimizedCssPath, path.join(pathToOrionClientBundlesFolder, cssFile.bundlePath)));
+						}
+					});
+				};
+			}));
+		});
 	});
 }
 
