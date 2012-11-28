@@ -46,6 +46,16 @@ Orionode and a publicly-accessible URL pointing to your local Orionode server.
 4. Select the **Plugins** category, click **Install**, paste in the URL, click **Submit**.
 5. Return to the Navigator page. Your Orionode files should appear as a new filesystem in the left-hand sidebar.
 
+## Use Orionode to debug your node.js application
+You can use Orionode to debug your node.js application. If you have exisiting node.js applications, make sure the code is under a subfolder in the -w option when you start Orionnode. This will give you easy access to your node.js apps from within Orionode.
+You can also create a new node.js application in your workspace.
+
+1. After Orionode starts, open the shell page and use help to see what commands are available.
+2. 'cd' to the folder where your application lives.
+3. Use 'node debug yourApp.js givenPort' to start you app in debug mode. You can start multiple apps in debug mode by repeating this step.
+4. In the feedback of the 'node debug' command, you will see a string of debugURL.
+5. Copy and paste that URL into a webkit browser(e.g., Chrome, Safari) and start debug. The URL normally looks like: http://yourOrionNodeServer:8900/debug?port=theGivenPort. 
+
 ## Security Concerns
 No security is guaranteed or even implied. Always run Orionode with the ```-pwd``` flag to prevent unauthorized access to your files.
 
