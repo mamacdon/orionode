@@ -240,7 +240,7 @@ function build(optimizeElements) {
 		section('Copying Dojo CSS files');
 		var copyDojoCss = IS_WINDOWS 
 			? format('robocopy "${0}" "${1}" *.css /s /nfl /ndl /nc /njh ', pathToDojo, pathToTempDir)
-			: format('find ${0} -name "*.css" -exec cp {} ${1} ";"', pathToDojo, pathToTempDir);
+			: format('rsync -rv --include="*/" --include="*.css" --exclude="*" ${0} ${1}', path.join(pathToDojo, 'org.dojotoolkit'), pathToTempDir);
 		return execCommand(copyDojoCss, null, !!IS_WINDOWS /*robocopy returns non-0 exit codes on success, ignore them*/)
 		.then(function() {
 			// Optimize each page's corresponding ${page}.css file.
