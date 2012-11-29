@@ -168,7 +168,7 @@ function build(optimizeElements) {
 		if (exists) {
 			section('Removing old temp dir ' + pathToTempDir);
 			var buildDir = __dirname;
-			var cleanCmd = IS_WINDOWS ? format('del /s /f /q "${0}\\*.*" 1> nul', pathToTempDir) : format('echo rm -rf ${0}', pathToTempDir);
+			var cleanCmd = IS_WINDOWS ? format('del /s /f /q "${0}\\*.*" 1> nul', pathToTempDir) : format('rm -rf ${0}', pathToTempDir);
 			return execCommand(cleanCmd, {cwd: buildDir}).then(function() {
 				if (IS_WINDOWS) {
 					return execCommand(format('rmdir /s /q "${0}"', pathToTempDir), {cwd: buildDir});
