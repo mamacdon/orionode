@@ -164,14 +164,20 @@ function build(optimizeElements) {
 		updateHtml: true,
 		copyBack: true
 	};
-	return pfs.mkdir(pathToTempDir).then(function() {
-		// Created the temp dir
-		return new Deferred().resolve();
-	}, function(err) {
-		if (err && err.code !== 'EEXIST') {
-			console.log(err.stack || err);
+	return exists(pathToTempDir).then(function(exists) {
+		if (exists) {
+			section('Removing old temp dir ' + pathToTempDir);
+			var buildDir = __dirname;
+			var cleanCmd = IS_WINDOWS ? format('del /s /f /q "${0}\\*.*" 1> nul', pathToTempDir) : format('echo rm -rf ${0}', pathToTempDir);
+			return execCommand(cleanCmd, {cwd: buildDir}).then(function() {
+				if (IS_WINDOWS) {
+					return execCommand(format('rmdir /s /q "${0}"', pathToTempDir), {cwd: buildDir});
+				}
+			});
 		}
-		return new Deferred().resolve();
+	}).then(function() {
+		section('Creating temp dir ' + pathToTempDir);
+		return pfs.mkdir(pathToTempDir);
 	}).then(function() {
 		// Copy all required files into the .temp directory for doing the build
 		if (steps.copy === false) { return new Deferred().resolve(); }
@@ -212,7 +218,7 @@ function build(optimizeElements) {
 		});
 	}).then(function() {
 		if (steps.optimize === false) { return new Deferred().resolve(); }
-		section('Running optimizes (' + optimizes.length + ')');
+		section('Optimizing page JS (' + optimizes.length + ')');
 		return PromisedIO.seq(optimizes.map(function(op) {
 			return function() {
 				// TODO check existence of path.join(pageDir, name) -- skip if the file doesn't exist
