@@ -14,10 +14,17 @@ A minimal, single-user deployment of [Eclipse Orion](http://www.elipse.org/orion
 * node.js
 * A web browser
 
+## Known Issues
+* Missing file operations: copy/move/rename, import/export, binary data.
+* The breadcrumb is buggy.
+* The node.js development features are a work in progress. Current limitations are:
+    * Standard output from a running node app is currently discarded and cannot be viewed. (We're working on it!)
+    * Once running, node apps currently do not exit automatically. They must be explicitly killed using ```node stop <pid>``` or by killing the server.
+
 ## Usage
 1. Checkout the orionode repository from GitHub.
-2. **Recommended:** create a one-line ```password.txt``` file containing a secret password.
 3. Launch the Orion server by running this command from a shell: 
+g2. **Recommended:** create a one-line ```password.txt``` file containing a secret password.
 ```node index.js [-p port] [-w directory] [-password password.txt]```
 4. Go to **[http://localhost:8081](http://localhost:8081)** (or whatever port you chose) in your web browser to start using Orion.
 
@@ -31,20 +38,6 @@ named **.workspace** in the repository folder.
 * ```-dev```: starts the server in development mode. In this mode, some client-side code is not cached by the browser, to ease development.
 * ```-log```: logs each request served to standard output.
 
-## Missing/buggy features
-* Missing file operations: copy/move/rename, import/export, binary data.
-* Buggy: breadcrumb
-
-## Other ways of using Orionode
-You can use Orionode as a file server, to access your local files from [Orionhub.org](http://www.orionhub.org/) (or any other Orion installation). All you need is 
-Orionode and a publicly-accessible URL pointing to your local Orionode server.
-
-1. Visit this page on your Orionode server (the hostname will differ from this example) and copy its URL:
-[http://yourOrionNodeServer:8081/plugins/fileClientPlugin.html](http://yourOrionNodeServer:8081/plugins/fileClientPlugin.html)
-2. Log in to Orionhub.
-3. Click the user menu in the top right-hand corner of the page, then click **Settings**.
-4. Select the **Plugins** category, click **Install**, paste in the URL, click **Submit**.
-5. Return to the Navigator page. Your Orionode files should appear as a new filesystem in the left-hand sidebar.
 
 ## Use Orionode to debug your node.js application
 You can use Orionode to debug your node.js application. If you have exisiting node.js applications, make sure the code is under a subfolder in the -w option when you start Orionnode. This will give you easy access to your node.js apps from within Orionode.
@@ -52,9 +45,9 @@ You can also create a new node.js application in your workspace.
 
 1. After Orionode starts, open the shell page and use help to see what commands are available.
 2. 'cd' to the folder where your application lives.
-3. Use 'node debug yourApp.js givenPort' to start you app in debug mode. You can start multiple apps in debug mode by repeating this step.
-4. In the feedback of the 'node debug' command, you will see a string of debugURL.
-5. Copy and paste that URL into a webkit browser(e.g., Chrome, Safari) and start debug. The URL normally looks like: http://yourOrionNodeServer:8900/debug?port=theGivenPort. 
+3. Use 'node debug yourApp.js givenPort' to start your app in debug mode. You can start multiple apps in debug mode by repeating this step.
+4. In the return value of the 'node debug' command, you will see a "debugURL" string.
+5. Copy and paste the debug URL into a webkit browser (e.g., Chrome, Safari) and start debugging. The URL normally looks something like: ```http://yourOrionNodeServer:8900/debug?port=theGivenPort```.
 
 ## Security Concerns
 No security is guaranteed or even implied. Always run Orionode with the ```-pwd``` flag to prevent unauthorized access to your files.
@@ -70,3 +63,13 @@ You can mitigate this by running the client-side build. To do this, just run ```
 
 Clear your browser cache. The next time you load Orionode, it should be much faster.
 
+## Other ways of using Orionode
+You can use Orionode as a file server, to access your local files from [Orionhub.org](http://www.orionhub.org/) (or any other Orion installation). All you need is 
+Orionode and a publicly-accessible URL pointing to your local Orionode server.
+
+1. Visit this page on your Orionode server (the hostname will differ from this example) and copy its URL:
+[http://yourOrionNodeServer:8081/plugins/fileClientPlugin.html](http://yourOrionNodeServer:8081/plugins/fileClientPlugin.html)
+2. Log in to Orionhub.
+3. Click the user menu in the top right-hand corner of the page, then click **Settings**.
+4. Select the **Plugins** category, click **Install**, paste in the URL, click **Submit**.
+5. Return to the Navigator page. Your Orionode files should appear as a new filesystem in the left-hand sidebar.
