@@ -23,8 +23,8 @@ A minimal, single-user deployment of [Eclipse Orion](http://www.elipse.org/orion
 
 ## Usage
 1. Checkout the orionode repository from GitHub.
+2. **Recommended:** create a one-line ```password.txt``` file containing a secret password.
 3. Launch the Orion server by running this command from a shell: 
-g2. **Recommended:** create a one-line ```password.txt``` file containing a secret password.
 ```node index.js [-p port] [-w directory] [-password password.txt]```
 4. Go to **[http://localhost:8081](http://localhost:8081)** (or whatever port you chose) in your web browser to start using Orion.
 
