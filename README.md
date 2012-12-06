@@ -18,8 +18,8 @@ A minimal, single-user deployment of [Eclipse Orion](http://www.eclipse.org/orio
 * Missing file operations: copy/move/rename, import/export, binary data.
 * The breadcrumb is buggy.
 * The node.js development features are a work in progress. Current limitations are:
-    * Standard output from a running node app is currently discarded and cannot be viewed. (We're working on it!)
-    * Once running, node apps currently do not exit automatically. They must be explicitly killed using ```node stop <pid>``` or by killing the server.
+    * Standard output (and error) from a running node app is currently discarded and cannot be viewed. (We're working on it!)
+    * There's no way to provide standard input to a running node app.
 
 ## Usage
 1. Checkout the orionode repository from GitHub. (Alternatively, you can install orionode using npm by running ```npm install orion```).
