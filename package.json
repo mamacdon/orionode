@@ -3,7 +3,6 @@
   "version": "0.0.2",
   "description": "An Eclipse Orion server based on Node.js and connect.",
   "homepage": "http://eclipse.org/orion/",
-  "main": "index.js",
   "dependencies": {
     "connect": "~2.4.6",
     "node-inspector": "~0.2.0beta3",
@@ -12,7 +11,6 @@
   },
   "devDependencies": {},
   "scripts": {
-    "start": "node ./index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

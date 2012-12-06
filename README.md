@@ -11,7 +11,7 @@ A minimal, single-user deployment of [Eclipse Orion](http://www.eclipse.org/orio
 * Concatenation and minification of pages (requires a manual step, see **Concatenation + Minification**, below)
 
 ## Requirements
-* node.js
+* node.js (plus npm)
 * A web browser
 
 ## Known Issues
@@ -22,11 +22,18 @@ A minimal, single-user deployment of [Eclipse Orion](http://www.eclipse.org/orio
     * Once running, node apps currently do not exit automatically. They must be explicitly killed using ```node stop <pid>``` or by killing the server.
 
 ## Usage
-1. Checkout the orionode repository from GitHub.
-2. **Recommended:** create a one-line ```password.txt``` file containing a secret password.
-3. Launch the Orion server by running this command from a shell: 
-```node index.js [-p port] [-w directory] [-password password.txt]```
-4. Go to **[http://localhost:8081](http://localhost:8081)** (or whatever port you chose) in your web browser to start using Orion.
+1. Checkout the orionode repository from GitHub. (Alternatively, you can install orionode using npm by running ```npm install orion```).
+2. If you checked out the repo from GitHub, download the dependencies by running:
+```npm install```
+3. **Recommended:** create a one-line ```password.txt``` file containing a secret password.
+4. Launch the Orion server by running one of the following commands from a shell.
+	* If you installed by checking out the Git repo:
+	```node server.js [-p port] [-w directory] [-password password.txt]```
+	* If you installed using npm, the path to server.js will be different:
+	```node ./node_modules/orionode/server.js [-p port] [-w directory] [-password password.txt]```
+	* If you're not passing any command-line arguments to the server, you can just do this:
+	```npm start```
+5. Go to **[http://localhost:8081](http://localhost:8081)** (or whatever port you chose) in your web browser to start using Orion.
 
 ##### Optional command line arguments:
 * ```-p``` or ```-port```: the port that the Orion server will listen on. Defaults to **8081**.
