@@ -1,5 +1,5 @@
 # Orionode
-A minimal, single-user deployment of [Eclipse Orion](http://www.elipse.org/orion/). Use for hacking files on your computer using Orion's editing environment.
+A minimal, single-user deployment of [Eclipse Orion](http://www.eclipse.org/orion/). Use for hacking files on your computer using Orion's editing environment.
 
 ## Features
 * Basic Navigator operations (Create file/folder, delete file/folder)
