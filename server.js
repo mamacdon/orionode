@@ -13,6 +13,7 @@ var orionNodeStatic = require('./lib/orionode_static');
 var orionStatic = require('./lib/orion_static');
 
 var LIBS = path.normalize(path.join(__dirname, 'lib/'));
+var NODE_MODULES = path.normalize(path.join(__dirname, 'node_modules/'));
 
 // vroom vroom
 http.globalAgent.maxSockets = 25;
@@ -50,8 +51,13 @@ function startServer(options) {
 			.use(connect.json())
 			.use(connect.compress())
 			// static code
-			.use(orionNodeStatic(path.normalize(path.join(LIBS, 'orionode.client/'))))
-			.use(orionStatic(    path.normalize(path.join(LIBS, 'orion.client/')), {dojoRoot: path.resolve(LIBS, 'dojo/'), dev: options.dev}))
+			.use(orionNodeStatic(path.normalize(path.join(LIBS, 'orionode.client/')), {
+				socketIORoot: path.resolve(NODE_MODULES, 'socket.io-client/')
+			}))
+			.use(orionStatic(path.normalize(path.join(LIBS, 'orion.client/')), {
+				dojoRoot: path.resolve(LIBS, 'dojo/'),
+				dev: options.dev
+			}))
 			// API handlers
 			.use(orionFile({root: '/file', workspaceDir: workspaceDir, tempDir: tempDir}))
 			.use(orionWorkspace({root: '/workspace', fileRoot: '/file', workspaceDir: workspaceDir, tempDir: tempDir}))
