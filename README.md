@@ -2,7 +2,7 @@
 A minimal, single-user deployment of [Eclipse Orion](http://www.eclipse.org/orion/). Use for hacking files on your computer using Orion's editing environment.
 
 ## Features
-* Basic Navigator operations (Create file/folder, delete file/folder)
+* Basic Navigator operations (Create file/folder, delete file/folder, copy/move/rename a file)
 * Basic Editor operations (Edit file, save file, ETags)
 * Plugin operations
 * Shell command for launching a node app (type ```help node``` in the Shell page to find out more)
@@ -15,7 +15,8 @@ A minimal, single-user deployment of [Eclipse Orion](http://www.eclipse.org/orio
 * A web browser
 
 ## Known Issues
-* Missing file operations: copy/move/rename, import/export, binary data.
+* Missing file operations: import and export.
+* Copy and Move only work on files, not folders (yet).
 * The breadcrumb is buggy.
 * The node.js development features are a work in progress. Current limitations are:
     * Standard output (and error) from a running node app is currently discarded and cannot be viewed. (We're working on it!)
