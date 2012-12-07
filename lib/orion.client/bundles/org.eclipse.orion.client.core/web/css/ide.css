@@ -114,6 +114,7 @@ h2 {
 	color: #404040;
 	vertical-align: middle;
 	font-weight: normal;
+	color:silver;
 }
 
 .dismiss {
@@ -136,10 +137,12 @@ h2 {
 	margin-bottom: 8px;
 	font-weight: normal;
 	vertical-align: baseline;
+	color:silver;
 }
 
 .parameterInputurl {
 	width: 30em;
+	color:#333;
 }
 
 .parameterInputcheckbox {
@@ -149,6 +152,7 @@ h2 {
 .parameterInputtextarea {
 	vertical-align: top;
 	width: 50em;
+	color:#333;
 }
 
 .parameterPopup {
@@ -394,14 +398,15 @@ h2 {
 	border-radius: 2px;
 	margin: 8px;
 	display: none;
-	vertical-align:middle;
-	font-size:11px;
+	vertical-align: middle;
+	font-size: 11px;
 	z-index: 50;
+	color: #999;
 }
 
 .slideParameters {
-	border: 1px solid #808080;
-	background-color: #d7d7d7;
+	border: 1px solid #555;
+	background-color: #555;
 }
 
 .slideContainerActive {
@@ -716,7 +721,17 @@ h2 {
 }
 
 input {
+	border-radius: 3px;
 	-moz-user-select: text;
+	text-indent: none;
+	text-indent: 0px;
+	text-shadow: none;
+	border: none;
+	border-radius: 2px;
+	color: #333;
+	font-size: 9pt;
+	padding: 2px;
+	margin-left: 5px;
 }
 
 .treeIterationCursor {
@@ -827,4 +842,32 @@ input {
 
 .targetSelector{
 
+}
+
+.setting-control {
+	display: inline-block;
+	width: 200px;
+	padding: 4px;
+	margin: 10px;
+	outline: none;
+	background-color: white;
+	border: 1px solid #CCC;
+	border-radius: 3px;
+	font-size: 12px;
+	color: #222;
+}
+
+.settingsPanelLabel {
+	margin-top: 10px;
+	min-width: 145px;
+	text-transform: uppercase;
+	color: #B3ADAA;
+	display: inline-block;
+}
+
+.settingsPanel{
+	position: relative;
+	float: right;
+	margin-right: 24px;
+	padding: 10px;
 }

@@ -303,7 +303,7 @@ a.currentLocation:hover {
 .dropdownMenu {
 	color: #222;
 	background-color: #fbfbfb;
-	display: none;
+	visibility: hidden;
 	z-index: 150;
 	min-width: 120px;
 	position: absolute;
@@ -334,18 +334,18 @@ a.currentLocation:hover {
 	padding: 4px 0;
 }
 
+.dropdownMenu > li > *:focus {
+	outline: 1px dotted #aaa;
+	background: #f3f6fe;
+}
+
 .dropdownMenu > li:hover {
 	text-decoration: none;
 	background: #ffeecc;
 }
 
-.dropdownMenu > li > *:focus {
-	outline: 1px dotted #aaa;
-	background: #ffeecc;
-}
-
 .dropdownMenuOpen {
-	display: block;
+	visibility: visible;
 }
 
 .dropdownSeparator {
