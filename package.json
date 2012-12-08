@@ -7,7 +7,9 @@
     "connect": "~2.4.6",
     "node-inspector": "~0.2.0beta3",
     "sax": "~0.4.2",
-    "promised-io": "~0.3.0"
+    "promised-io": "~0.3.0",
+    "cover": "~0.2.8",
+    "async": "~0.1.22"
   },
   "devDependencies": {},
   "scripts": {
