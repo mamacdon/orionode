@@ -82,7 +82,7 @@ function startServer(options) {
 			}))
 			.listen(options.port);
 		// Socket server
-		var io = socketio.listen(app);
+		var io = socketio.listen(app, { 'log level': 2 });
 		appSocket.install({io: io, appContext: appContext});
 
 		if (options.dev) {
