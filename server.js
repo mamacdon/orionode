@@ -2,9 +2,12 @@
 var connect = require('connect');
 var mime = connect.mime;
 var http = require('http');
+var socketio = require('socket.io');
 var path = require('path');
 var url = require('url');
 var util = require('util');
+var AppContext = require('./lib/node_apps').AppContext;
+var appSocket = require('./lib/node_app_socket');
 var argslib = require('./lib/args');
 var orionFile = require('./lib/file');
 var orionNode = require('./lib/node');
@@ -44,6 +47,9 @@ function logger(options) {
 function startServer(options) {
 	var workspaceDir = options.workspaceDir, tempDir = options.tempDir;
 	try {
+		var appContext = new AppContext({fileRoot: '/file', workspaceDir: workspaceDir});
+
+		// HTTP server
 		var app = connect()
 			.use(logger(options))
 			.use(connect.urlencoded())
@@ -59,10 +65,26 @@ function startServer(options) {
 				dev: options.dev
 			}))
 			// API handlers
-			.use(orionFile({root: '/file', workspaceDir: workspaceDir, tempDir: tempDir}))
-			.use(orionWorkspace({root: '/workspace', fileRoot: '/file', workspaceDir: workspaceDir, tempDir: tempDir}))
-			.use(orionNode({root: '/node', fileRoot: '/file', workspaceDir: workspaceDir, tempDir: tempDir}))
+			.use(orionFile({
+				root: '/file',
+				workspaceDir: workspaceDir,
+				tempDir: tempDir
+			}))
+			.use(orionWorkspace({
+				root: '/workspace',
+				fileRoot: '/file',
+				workspaceDir: workspaceDir,
+				tempDir: tempDir
+			}))
+			.use(orionNode({
+				appContext: appContext,
+				root: '/node'
+			}))
 			.listen(options.port);
+		// Socket server
+		var io = socketio.listen(app);
+		appSocket.install({io: io, appContext: appContext});
+
 		if (options.dev) {
 			console.log('Running in development mode');
 		}
