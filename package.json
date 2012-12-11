@@ -1,6 +1,6 @@
 {
   "name": "orion",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "An Eclipse Orion server based on Node.js and connect.",
   "homepage": "http://eclipse.org/orion/",
   "dependencies": {
