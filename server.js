@@ -2,9 +2,12 @@
 var connect = require('connect');
 var mime = connect.mime;
 var http = require('http');
+var socketio = require('socket.io');
 var path = require('path');
 var url = require('url');
 var util = require('util');
+var AppContext = require('./lib/node_apps').AppContext;
+var appSocket = require('./lib/node_app_socket');
 var argslib = require('./lib/args');
 var orionFile = require('./lib/file');
 var orionNode = require('./lib/node');
@@ -13,6 +16,7 @@ var orionNodeStatic = require('./lib/orionode_static');
 var orionStatic = require('./lib/orion_static');
 
 var LIBS = path.normalize(path.join(__dirname, 'lib/'));
+var NODE_MODULES = path.normalize(path.join(__dirname, 'node_modules/'));
 
 // vroom vroom
 http.globalAgent.maxSockets = 25;
@@ -43,6 +47,9 @@ function logger(options) {
 function startServer(options) {
 	var workspaceDir = options.workspaceDir, tempDir = options.tempDir;
 	try {
+		var appContext = new AppContext({fileRoot: '/file', workspaceDir: workspaceDir});
+
+		// HTTP server
 		var app = connect()
 			.use(logger(options))
 			.use(connect.urlencoded())
@@ -50,13 +57,34 @@ function startServer(options) {
 			.use(connect.json())
 			.use(connect.compress())
 			// static code
-			.use(orionNodeStatic(path.normalize(path.join(LIBS, 'orionode.client/'))))
-			.use(orionStatic(    path.normalize(path.join(LIBS, 'orion.client/')), {dojoRoot: path.resolve(LIBS, 'dojo/'), dev: options.dev}))
+			.use(orionNodeStatic(path.normalize(path.join(LIBS, 'orionode.client/')), {
+				socketIORoot: path.resolve(NODE_MODULES, 'socket.io-client/')
+			}))
+			.use(orionStatic(path.normalize(path.join(LIBS, 'orion.client/')), {
+				dojoRoot: path.resolve(LIBS, 'dojo/'),
+				dev: options.dev
+			}))
 			// API handlers
-			.use(orionFile({root: '/file', workspaceDir: workspaceDir, tempDir: tempDir}))
-			.use(orionWorkspace({root: '/workspace', fileRoot: '/file', workspaceDir: workspaceDir, tempDir: tempDir}))
-			.use(orionNode({root: '/node', fileRoot: '/file', workspaceDir: workspaceDir, tempDir: tempDir}))
+			.use(orionFile({
+				root: '/file',
+				workspaceDir: workspaceDir,
+				tempDir: tempDir
+			}))
+			.use(orionWorkspace({
+				root: '/workspace',
+				fileRoot: '/file',
+				workspaceDir: workspaceDir,
+				tempDir: tempDir
+			}))
+			.use(orionNode({
+				appContext: appContext,
+				root: '/node'
+			}))
 			.listen(options.port);
+		// Socket server
+		var io = socketio.listen(app, { 'log level': 2 });
+		appSocket.install({io: io, appContext: appContext});
+
 		if (options.dev) {
 			console.log('Running in development mode');
 		}

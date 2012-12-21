@@ -12,15 +12,15 @@ A minimal, single-user deployment of [Eclipse Orion](http://www.eclipse.org/orio
 
 ## Requirements
 * node.js (plus npm)
-* A web browser
+* A modern web browser with Web Socket support (for example: Firefox 15, Chrome 22, Internet Explorer 10, Safari 6)
 
 ## Known Issues
 * Missing file operations: import and export.
-* Copy and Move only work on files, not folders (yet).
-* The breadcrumb is buggy.
+* Copy and Move only work on files, not folders (yet, see issue #4).
+* The breadcrumb is buggy (see issue #10).
 * The node.js development features are a work in progress. Current limitations are:
-    * Standard output (and error) from a running node app is currently discarded and cannot be viewed. (We're working on it!)
     * There's no way to provide standard input to a running node app.
+	* Output from Shell commands doesn't look nice (whitespace is not preserved, so the text runs together).
 
 ## Usage
 1. Checkout the orionode repository from GitHub. (Alternatively, you can install orionode using npm by running ```npm install orion```).
