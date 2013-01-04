@@ -8,8 +8,10 @@
     "node-inspector": "~0.2.0beta3",
     "sax": "~0.4.2",
     "promised-io": "~0.3.0",
+    "cover": "~0.2.8",
     "socket.io": "~0.9.11",
-    "socket.io-client": "~0.9.11"
+    "socket.io-client": "~0.9.11",
+    "async": "~0.1.22"
   },
   "devDependencies": {},
   "scripts": {
