@@ -1,1 +1,0 @@
-This directory contains zip files that are used to generate web site templates in the "Create New Content" extension.
